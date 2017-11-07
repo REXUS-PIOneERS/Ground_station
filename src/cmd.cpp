@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 #include "cmd.h"
+#include "shared_memory.h"
 
 namespace gnd
 {

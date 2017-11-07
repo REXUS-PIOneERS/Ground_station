@@ -10,7 +10,7 @@ COMPILE = $(CXX) $(CFLAGS) $(INCPATH) $^ -o $@
 LINK = $(CXX) $(LFLAGS) $^ -o $@
 
 
-$(GND_TARGET): build/main.o build/cmd.o build/workers.o build/radiocom.o build/protocol.o
+$(GND_TARGET): build/main.o build/cmd.o build/workers.o build/radiocom.o build/protocol.o build/config_parser.o
 	$(LINK)
 build/main.o: src/main.cpp
 	$(COMPILE)
@@ -22,7 +22,8 @@ build/radiocom.o: ../Radio_comm/src/radiocom.cpp
 	$(COMPILE)
 build/protocol.o: ../Radio_comm/src/protocol.cpp
 	$(COMPILE)
-
+build/config_parser.o: src/config_parser.cpp
+	$(COMPILE)
 
 $(shell mkdir -p bin)
 $(shell mkdir -p build)

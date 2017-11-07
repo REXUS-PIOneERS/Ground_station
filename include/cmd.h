@@ -10,7 +10,7 @@ namespace gnd
 {
   typedef std::array<std::string, 4> func_params_t;
   typedef std::function<void(const func_params_t&)> func_t;
-  
+
   void reset(const func_params_t&);
   void shutdown(const func_params_t&);
   void invalid(const func_params_t&);
@@ -29,3 +29,4 @@ namespace gnd
 }
 
 #endif
+
