@@ -1,10 +1,10 @@
 #include <map>
 #include <functional>
 #include <iostream>
-#include "../../Radio_comm/include/radiocom.h"
-#include "../include/shared_memory.h"
-#include "../include/workers.h"
-#include "../include/core.h"
+#include "radiocom.h"
+#include "shared_memory.h"
+#include "workers.h"
+#include "cmd.h"
 
 using namespace std;
 using namespace rfcom;
@@ -23,11 +23,17 @@ int main(int argc, char** argv)
   M_KM_Shared m_km_mem;
   //To be implmented
 
+  Transceiver t;
+  
   //Initialize threads
-  pthread_t kb_monitor_t;
+  pthread_t kb_monitor_t, file_writer_t;
   pthread_create(&kb_monitor_t, NULL, Workers::kb_monitor, &m_km_mem);
+  pthread_create(&file_writer_t, NULL, Workers::file_writer, &t);
   //To be implemented
   
+  t.initPort("/dev/ttyS64", "log");
+  t.startListener();
+  cout << "Listener started" << endl;
   showStartupInfo();
 
   while(true)
@@ -44,8 +50,13 @@ int main(int argc, char** argv)
       pthread_mutex_unlock(&m_km_mem.lock);
     }
 
-  pthread_join(kb_monitor_t, NULL);
   
+  pthread_join(kb_monitor_t, NULL);
+
+
+  
+  t.stopListener();
+  t.termPort();
 
   return 0;
 }

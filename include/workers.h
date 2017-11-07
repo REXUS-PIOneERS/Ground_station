@@ -10,6 +10,8 @@ namespace gnd
     {
     public:
       static void* kb_monitor(void* arg);
+      static void* file_writer(void* arg);
+      
     };
 
 }

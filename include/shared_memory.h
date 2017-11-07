@@ -6,6 +6,7 @@
 #include <string>
 #include <functional>
 
+
 namespace gnd
 {  
   typedef std::array<std::string, 4> func_params_t;
@@ -39,6 +40,9 @@ namespace gnd
   //Shared between threads: main, file writer
   struct M_FW_Shared
   {
+    volatile bool exit_flag;
+    M_FW_Shared()
+    : exit_flag(false){}
   };
   
 }

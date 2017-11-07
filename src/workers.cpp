@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <ctype.h>
 #include <sstream>
-#include "../include/workers.h"
-#include "../include/shared_memory.h"
-#include "../include/core.h"
+#include "radiocom.h"
+#include "workers.h"
+#include "shared_memory.h"
+#include "cmd.h"
+
 
 namespace gnd
 {
@@ -48,5 +50,20 @@ namespace gnd
 	pthread_mutex_unlock(&mem_ptr->lock);
       }    
     pthread_exit(NULL);
+  }
+
+  void* Workers::file_writer(void* arg)
+  {
+    rfcom::Transceiver* t_ptr = static_cast<rfcom::Transceiver*>(arg);
+    rfcom::Packet p;
+
+    while(true)
+      {
+	//Wait for packet
+	while(!t_ptr->extractNext(p)){usleep(100000);}
+	
+	rfcom::packetOut(p, std::cout);
+	std::cout << std::endl;
+      }
   }
 }
