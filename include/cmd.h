@@ -5,27 +5,37 @@
 #include <string>
 #include <array>
 #include <functional>
+#include "radiocom.h"
 
 namespace gnd
 {
-  typedef std::array<std::string, 4> func_params_t;
-  typedef std::function<void(const func_params_t&)> func_t;
-
-  void reset(const func_params_t&);
-  void shutdown(const func_params_t&);
-  void invalid(const func_params_t&);
-
-  void showParams(const func_params_t&);
-
-
-
-  /*struct GndConfig
+  class CMD
   {
-    std::string 
-    }*/
-  void readConfigFile(const std::string& filename);
+  public:
+    typedef std::array<std::string, 4> func_params_t;
+    typedef std::function<void(const func_params_t&)> func_t;
+
+    static void reboot(const func_params_t&);
+    static void shutdown(const func_params_t&);
+    static void test(const func_params_t&);
+    static void mode(const func_params_t&);
+
+    //Not yet implemented
+    static void reset(const func_params_t&);
+    static void invalid(const func_params_t&);
   
-  extern std::map<std::string, func_t> command_map;
+    static void showParams(const func_params_t&);
+
+    static void readConfigFile(const std::string& filename);
+  
+    static std::map<std::string, func_t> command_map;
+
+    static rfcom::Transceiver* trPtr;
+
+  private:
+    static bool shutdown_called;
+    
+  };
 }
 
 #endif

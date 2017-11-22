@@ -16,8 +16,10 @@ namespace gnd
     M_KM_Shared* mem_ptr = static_cast<M_KM_Shared*>(arg);
     std::string input, command;
     size_t params_count;
-    decltype(command_map)::iterator m_it;
+    decltype(CMD::command_map)::iterator m_it;
     std::istringstream iss;
+
+    //cin will automatically block.
     while(std::getline(std::cin, input))
       {
 	iss.str(input);
@@ -42,9 +44,10 @@ namespace gnd
 	  }
 
 	//command invalid
-	if((m_it = command_map.find(command)) == command_map.end())
-	  m_it = command_map.find("invalid");
+	if((m_it = CMD::command_map.find(command)) == CMD::command_map.end())
+	  m_it = CMD::command_map.find("invalid");
 	
+	//valid commands
 	mem_ptr->action = m_it->second;
 	pthread_cond_signal(&mem_ptr->cond);
 	pthread_mutex_unlock(&mem_ptr->lock);

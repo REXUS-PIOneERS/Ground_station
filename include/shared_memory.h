@@ -30,8 +30,10 @@ namespace gnd
   //Shared between threads: main, keyboard monitor
   struct M_KM_Shared : Shared_Base
   {
+    //Command line related function and parameters
     func_t action;
     func_params_t params;
+    
     volatile bool exit_flag;
     M_KM_Shared()
     : exit_flag(false){}

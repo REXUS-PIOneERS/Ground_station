@@ -68,25 +68,25 @@ namespace gnd
 	      }
 	  }
 	
-	//P_LOG
-	if(line_seg == "P_LOG")
+	//RAW_LOG
+	if(line_seg == "RAW_LOG")
 	  {
 	    iss >> line_seg;
-	    config.p_log = line_seg;
+	    config.raw_log = line_seg;
 	  }
 
 	//C_LOG
-	if(line_seg == "C_LOG")
+	if(line_seg == "PACKET_LOG")
 	  {
 	    iss >> line_seg;
-	    config.c_log = line_seg;
+	    config.packet_log = line_seg;
 	  }
 
 	//D_LOG
-	if(line_seg == "D_LOG")
+	if(line_seg == "DATA_LOG")
 	  {
 	    iss >> line_seg;
-	    config.d_log = line_seg;
+	    config.data_log = line_seg;
 	  }
 
       }

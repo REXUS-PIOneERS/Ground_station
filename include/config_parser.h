@@ -12,9 +12,9 @@ namespace gnd
   struct GndConfig
   {
     std::string port;
-    std::string p_log;
-    std::string c_log;
-    std::string d_log;
+    std::string raw_log;
+    std::string packet_log;
+    std::string data_log;
     
     speed_t baud;
   };

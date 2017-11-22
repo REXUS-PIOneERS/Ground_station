@@ -6,7 +6,7 @@ CFLAGS = -Wall -c -std=c++11
 LFLAGS = -Wall -pthread
 DEBUG =
 
-COMPILE = $(CXX) $(CFLAGS) $(INCPATH) $^ -o $@
+COMPILE = $(CXX) $(CFLAGS) $(INCPATH) $(DEBUG) $^ -o $@
 LINK = $(CXX) $(LFLAGS) $^ -o $@
 
 

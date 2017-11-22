@@ -16,9 +16,15 @@ using namespace gnd;
 void showStartupInfo()
 {
   cout << "Groundstation shell ready." << endl;
-  cout << "Supported commands: reset, shutdown, test, status, motor, burnwire" << endl;
+  cout << "Supported commands: reboot, shutdown, mode, test" << endl;
   cout << "Type 'help' for details." << endl;
 }
+
+
+//Global Tranceiver, can be accessed by any thread.
+//Reading packets is protected by internal mutex lock.
+//Sending packets is unprotected.
+
 
 int main(int argc, char** argv)
 {
@@ -35,24 +41,28 @@ int main(int argc, char** argv)
 
   
   //Initialize transceiver
-  Transceiver t;
-  error_code = t.initPort(g_config->port, g_config->baud, g_config->p_log);
+  Transceiver tr;
+  error_code = tr.initPort(g_config->port, g_config->baud, g_config->raw_log, g_config->packet_log);
   CHECK_FATAL_ERROR(error_code == -1, "Cannot open serial port: " + g_config->port + "!");
-  CHECK_FATAL_ERROR(error_code == -2, "Cannot open log file: " + g_config->p_log + "!");
+  CHECK_FATAL_ERROR(error_code == -2, "Cannot open raw log file: " + g_config->raw_log + "!");
+  CHECK_FATAL_ERROR(error_code == -3, "Cannot open packet log file: " + g_config->packet_log + "!");
   
-  error_code = t.startListener();
-  CHECK_FATAL_ERROR(error_code < 0, "Cannot start listener thread!");
+  error_code = tr.startReceiving();
+  CHECK_FATAL_ERROR(error_code == -1, "Cannot start listener thread!");
+  CHECK_FATAL_ERROR(error_code == -2, "Cannot start packet divider thread!");
+  
+  //Pass transceiver pointer to CMD
+  CMD::trPtr = &tr;
   
   //Initialize shared memory
   M_KM_Shared m_km_mem;
   //To be implmented
 
   //Initialize threads
-  pthread_t kb_monitor_t, file_writer_t;
+  pthread_t kb_monitor_t;
   error_code = pthread_create(&kb_monitor_t, NULL, Workers::kb_monitor, &m_km_mem);
-  //error_code |= pthread_create(&file_writer_t, NULL, Workers::file_writer, &t);
+  CHECK_FATAL_ERROR(error_code != 0, "Cannot start keyboard monitor thread!");
   //To be implemented
-  CHECK_FATAL_ERROR(error_code != 0, "One of the crutial threads failed to initialize!");
   
 
   delete g_config;
@@ -61,9 +71,10 @@ int main(int argc, char** argv)
   
   while(true)
     {
-      cout << ">>>" << flush;
+      cout << ">>> " << flush;
       pthread_mutex_lock(&m_km_mem.lock);
       pthread_cond_wait(&m_km_mem.cond, &m_km_mem.lock);
+      //If 'exit' is typed.
       if(m_km_mem.exit_flag)
 	{
 	  pthread_mutex_unlock(&m_km_mem.lock);
@@ -78,8 +89,8 @@ int main(int argc, char** argv)
 
 
   
-  t.stopListener();
-  t.termPort();
+  tr.stopReceiving();
+  tr.termPort();
 
   return 0;
 }
