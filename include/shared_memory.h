@@ -39,11 +39,11 @@ namespace gnd
     : exit_flag(false){}
   };
   
-  //Shared between threads: main, file writer
-  struct M_FW_Shared
+  //Shared between threads: main, packet retriever
+  struct M_PR_Shared
   {
     volatile bool exit_flag;
-    M_FW_Shared()
+    M_PR_Shared()
     : exit_flag(false){}
   };
   

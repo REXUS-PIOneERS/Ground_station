@@ -62,6 +62,12 @@ int main(int argc, char** argv)
   pthread_t kb_monitor_t;
   error_code = pthread_create(&kb_monitor_t, NULL, Workers::kb_monitor, &m_km_mem);
   CHECK_FATAL_ERROR(error_code != 0, "Cannot start keyboard monitor thread!");
+  
+  pthread_t packet_retriever_t;
+  error_code = pthread_create(&packet_retriever_t, NULL, Workers::packet_retriever, &tr);
+  CHECK_FATAL_ERROR(error_code != 0, "Cannot start packet retriever thread!");
+  //Need to terminate this thread
+  
   //To be implemented
   
 

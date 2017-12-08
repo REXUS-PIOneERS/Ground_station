@@ -79,8 +79,6 @@ namespace gnd
     else
       INVALID_PARAM_FEEDBACK("test", params[0]);
   }
-
-  
   
   void CMD::reset(const func_params_t& params)
   {

@@ -46,7 +46,7 @@ namespace gnd
 	//command invalid
 	if((m_it = CMD::command_map.find(command)) == CMD::command_map.end())
 	  m_it = CMD::command_map.find("invalid");
-	
+
 	//valid commands
 	mem_ptr->action = m_it->second;
 	pthread_cond_signal(&mem_ptr->cond);
@@ -55,18 +55,42 @@ namespace gnd
     pthread_exit(NULL);
   }
 
-  void* Workers::file_writer(void* arg)
+  void* Workers::packet_retriever(void* arg)
   {
     rfcom::Transceiver* t_ptr = static_cast<rfcom::Transceiver*>(arg);
     rfcom::Packet p;
-
+    rfcom::byte1_t id;
+    rfcom::byte2_t index;
+    rfcom::byte1_t data[16];
+    int err_code = 0;
+    
     while(true)
       {
 	//Wait for packet
-	while(!t_ptr->extractNext(p)){usleep(100000);}
+	while((err_code = t_ptr->tryPopUnpack(id, index, data)) < 0)
+	  {
+	    if(err_code == -2)
+	      std::cout << "COBS error" << std::endl;
+	    if(err_code == -3)
+	      std::cout << "CRC error" << std::endl;
+
+	    t_ptr->extractNext(p);
+	    
+	    //rfcom::packetOut(p, std::cout);
+	    
+	    usleep(1000);
+	    continue;
+	  }
 	
-	rfcom::packetOut(p, std::cout);
-	std::cout << std::endl;
+	//rfcom::packetOut(p, std::cout);
+
+	//A message
+	if(id == 0x90)
+	  {
+	    for(int count = 0; count < 16; ++count)
+	      std::cout << data[count];
+	    std::cout << std::endl;
+	  }
       }
   }
 }
