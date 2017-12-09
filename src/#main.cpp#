@@ -54,57 +54,6 @@ int main(int argc, char** argv)
   //Pass transceiver pointer to CMD
   CMD::trPtr = &tr;
 
-  //Initialize shared memory
-  M_KM_Shared m_km_mem;
-  M_PR_Shared m_pr_mem;
-  
-  //Initialize workers
-  Workers::trPtr = &tr;
-  Workers::bad_packet_fs.open(g_config->bad_packet_log);
-  CHECK_FATAL_ERROR(!Workers::bad_packet_fs.is_open(), "Cannot open bad packet log file: " + g_config->bad_packet_log + "!");
-  Workers::data_fs.open(g_config->data_log);
-  CHECK_FATAL_ERROR(!Workers::data_fs.is_open(), "Cannot open data log file: " + g_config->data_log + "!");
-  
-  pthread_t kb_monitor_t;
-  error_code = pthread_create(&kb_monitor_t, NULL, Workers::kb_monitor, &m_km_mem);
-  CHECK_FATAL_ERROR(error_code != 0, "Cannot start keyboard monitor thread!");
-  
-  pthread_t packet_retriever_t;
-  error_code = pthread_create(&packet_retriever_t, NULL, Workers::packet_retriever, &m_pr_mem);
-  CHECK_FATAL_ERROR(error_code != 0, "Cannot start packet retriever thread!");  
-
-  delete g_config;
-  //Initialization completed
-  showStartupInfo();
-  
-  while(true)
-    {
-      cout << ">>> " << flush;
-      pthread_mutex_lock(&m_km_mem.lock);
-      pthread_cond_wait(&m_km_mem.cond, &m_km_mem.lock);
-      //If 'exit' is typed.
-      if(m_km_mem.exit_flag)
-	{
-	  pthread_mutex_unlock(&m_km_mem.lock);
-	  //set packet retriever exit flag
-	  pthread_mutex_lock(&m_pr_mem.lock);
-	  m_pr_mem.exit_flag = true;
-	  pthread_mutex_unlock(&m_pr_mem.lock);
-	  break;
-	}
-      m_km_mem.action(m_km_mem.params);
-      pthread_mutex_unlock(&m_km_mem.lock);
-    }
-
-  //Terminate worker threads
-  pthread_join(packet_retriever_t, NULL);
-  pthread_join(kb_monitor_t, NULL);
-  
-  //close log files
-  Workers::data_fs.close();
-  Workers::bad_packet_fs.close();
-
-  //Terminate transceiver
   tr.stopReceiving();
   tr.termPort();
 

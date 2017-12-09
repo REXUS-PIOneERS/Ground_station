@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <algorithm>
 #include <ctype.h>
 #include <sstream>
 #include "radiocom.h"
@@ -55,18 +54,171 @@ namespace gnd
     pthread_exit(NULL);
   }
 
-  void* Workers::file_writer(void* arg)
-  {
-    rfcom::Transceiver* t_ptr = static_cast<rfcom::Transceiver*>(arg);
-    rfcom::Packet p;
+#define GET_DSM(X)    (X & 0xc0)
+#define GET_PI_NUM(X) (X & 0x30)
+#define GET_TYPE(X)   (X & 0x0f)
 
-    while(true)
+#define DSM_DATA (0x00)
+#define DSM_STAT (0x40)
+#define DSM_MESG (0x80)
+
+#define PI_NUM_1 (0x10)
+#define PI_NUM_2 (0x20)
+
+#define DATA_TYPE_AG (0x00)
+#define DATA_TYPE_MT (0x01)
+#define DATA_TYPE_MTI (0x02)
+
+#define STAT_TYPE_GEN (0x00)
+#define STAT_TYPE_ENC (0x01)
+
+#define MESG_TYPE_GEN   (0x00)
+#define MESG_TYPE_ERR   (0x01)
+#define MESG_TYPE_FATAL (0x02)
+  
+  void* Workers::packet_retriever(void* arg)
+  {
+    M_PR_Shared* mem_ptr = static_cast<M_PR_Shared*>(arg);
+    rfcom::Packet p;
+    rfcom::byte1_t id;
+    rfcom::byte1_t id_dsm;
+    rfcom::byte1_t id_pi_num;
+    rfcom::byte1_t id_type;
+    rfcom::byte2_t index;
+    rfcom::byte1_t data[16];
+    int err_code = 0;
+
+    while(mem_ptr->exit_flag)
       {
-	//Wait for packet
-	while(!t_ptr->extractNext(p)){usleep(100000);}
-	
-	rfcom::packetOut(p, std::cout);
-	std::cout << std::endl;
+	err_code = trPtr->tryPopUnpack(id, index, data);
+	//PDU stream empty
+	if(err_code == -1)
+	  {
+	    usleep(1000);
+	    continue;
+	  }
+	//Bad packet
+	else if(err_code < 0)
+	  {
+	    trPtr->extractNext(p);
+	    _new_bad_packet_entry(p, err_code);
+	    continue;
+	  }
+
+	//Good packet
+	else
+	  {
+	    id_dsm = GET_DSM(id);
+	    id_pi_num = GET_PI_NUM(id);
+	    id_type = GET_TYPE(id);
+
+	    //Assume messages are received in chunks in PDU stream.
+	    //If such chunks break up, it means a complete message is received. Time to wrap a line
+	    if(id_dsm != DSM_MESG && _prev_is_mesg)
+	      {
+		_prev_is_mesg = false;
+		std::cout << std::endl;
+		std::cout << ">>> " << std::endl;
+	      }
+	    
+	    switch(id_dsm)
+	      {
+	      case DSM_MESG:
+		_prev_is_mesg = true;
+		_array_out(data, 16, std::cout);
+		break;
+		
+	      case DSM_DATA:
+		_new_data_entry(id_pi_num, id_type, index, data);
+		break;
+		
+	      case DSM_STAT:
+		data_fs << "Status packet?" << std::endl;
+		break;
+		
+	      default:
+		data_fs << "Unknown packet?" << std::endl;
+		break;
+	      }
+	  }
+
+      }
+    pthread_exit(NULL);
+  }
+
+  void Workers::_new_bad_packet_entry(const rfcom::Packet& p, int err_code)
+  {
+    //COBS decode error
+    if(err_code == -2)
+      {
+	bad_packet_fs << "COBS: ";
+	rfcom::packetOut(p, bad_packet_fs);
+	bad_packet_fs << std::endl;
+      }
+    //CRC mismatch
+    else
+      {
+	bad_packet_fs << "CRC : ";
+	rfcom::packetOut(p, bad_packet_fs);
+	bad_packet_fs << std::endl;
       }
   }
+  
+  void Workers::_new_data_entry(rfcom::byte1_t id_pi_num, rfcom::byte1_t id_type, rfcom::byte2_t index, const rfcom::byte1_t* data)
+  {
+    //determine which pi does this packet come from
+    switch(id_pi_num)
+      {
+      case PI_NUM_1:
+	data_fs << "PI1: ";
+	break;
+      case PI_NUM_2:
+	data_fs << "PI2: ";
+	break;
+      default:
+	data_fs << "PI*: ";
+	break;
+      }
+
+    //determine data type
+    switch (id_type)
+      {
+	// acc/gyr
+      case DATA_TYPE_AG:
+	data_fs << "acc/gyr:\t[" << index << "]" << "\t";
+	_array_out(data, 12, data_fs);
+	data_fs << std::endl;
+	break;
+	// mag/time
+      case DATA_TYPE_MT:
+	data_fs << "mag/time:\t[" << index << "]" << "\t";
+	_array_out(data, 10, data_fs);
+	data_fs << std::endl;
+	break;
+	//mag/time/imp
+      case DATA_TYPE_MTI:
+	data_fs << "mag/imp/time:\t[" << index << "]" << "\t";
+	_array_out(data, 12, data_fs);
+	data_fs << std::endl;
+	break;
+      default:
+	data_fs << "unknown:\t[" << index << "]" << "\t";
+	_array_out(data, 16, data_fs);
+	data_fs << std::endl;
+	break;	
+      }
+  }
+  
+  void Workers::_array_out(const rfcom::byte1_t* pos, size_t len, std::ostream& os)
+  {
+    os << std::hex;
+    auto os_it = std::ostream_iterator<int>(os, " ");
+    std::copy(pos, pos + len, os_it);
+  }
+
+
+  rfcom::Transceiver* Workers::trPtr = NULL;
+  std::ofstream Workers::bad_packet_fs;
+  std::ofstream Workers::data_fs;
+  bool Workers::_prev_is_mesg = false;
 }

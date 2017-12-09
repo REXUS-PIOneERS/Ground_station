@@ -30,7 +30,7 @@ namespace gnd
     if(!shutdown_called)
       {
 	shutdown_called = true;
-	std::cout << "Shutdown? retype [shutdown] to confirm" << std::endl;
+	std::cout << "Shutdown? re-enter [shutdown] to confirm" << std::endl;
       }
     //second time confirm
     else
@@ -72,6 +72,33 @@ namespace gnd
 	  SENT_FEEDBACK("test all");
 	else
 	  UNSENT_FEEDBACK("test all");
+      }
+    //test imu
+    if(params[0] == "imu")
+      {
+	rfcom::byte1_t cmd_data[2] = {0x04, 0x01};
+	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+	  SENT_FEEDBACK("test imu");
+	else
+	  UNSENT_FEEDBACK("test imu");
+      }
+    //test camera
+    if(params[0] == "camera")
+      {
+	rfcom::byte1_t cmd_data[2] = {0x04, 0x02};
+	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+	  SENT_FEEDBACK("test camera");
+	else
+	  UNSENT_FEEDBACK("test camera");
+      }
+    //test imp
+    if(params[0] == "imp")
+      {
+	rfcom::byte1_t cmd_data[2] = {0x04, 0x03};
+	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+	  SENT_FEEDBACK("test imp");
+	else
+	  UNSENT_FEEDBACK("test imp");
       }
 
 

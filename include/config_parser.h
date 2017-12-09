@@ -14,6 +14,7 @@ namespace gnd
     std::string port;
     std::string raw_log;
     std::string packet_log;
+    std::string bad_packet_log;
     std::string data_log;
     
     speed_t baud;

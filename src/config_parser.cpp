@@ -31,19 +31,16 @@ namespace gnd
 	if(line_seg.empty())
 	  continue;
 	
-	//A comment
-	if(*line_seg.begin() == '#')
+	else if(*line_seg.begin() == '#')
 	  continue;
 	
-	//PORT
-	if(line_seg == "PORT")
+	else if(line_seg == "PORT")
 	  {
 	    iss >> line_seg;
 	    config.port = line_seg;
 	  }
 
-	//BAUD
-	if(line_seg == "BAUD")
+	else if(line_seg == "BAUD")
 	  {
 	    iss >> baudrate;
 	    switch(baudrate)
@@ -68,27 +65,29 @@ namespace gnd
 	      }
 	  }
 	
-	//RAW_LOG
-	if(line_seg == "RAW_LOG")
+	else if(line_seg == "RAW_LOG")
 	  {
 	    iss >> line_seg;
 	    config.raw_log = line_seg;
 	  }
 
-	//C_LOG
-	if(line_seg == "PACKET_LOG")
+	else if(line_seg == "PACKET_LOG")
 	  {
 	    iss >> line_seg;
 	    config.packet_log = line_seg;
 	  }
 
-	//D_LOG
-	if(line_seg == "DATA_LOG")
+	else if(line_seg == "BAD_PACKET_LOG")
+	  {
+	    iss >> line_seg;
+	    config.bad_packet_log = line_seg;
+	  }
+	
+	else if(line_seg == "DATA_LOG")
 	  {
 	    iss >> line_seg;
 	    config.data_log = line_seg;
 	  }
-
       }
     return 0;
   }

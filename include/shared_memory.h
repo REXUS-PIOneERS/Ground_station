@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "radiocom.h"
 
 
 namespace gnd
@@ -17,9 +18,10 @@ namespace gnd
   {
     pthread_mutex_t lock;
     pthread_cond_t cond;
-
+    volatile bool exit_flag;
+    
     Shared_Base()
-      : lock(PTHREAD_MUTEX_INITIALIZER), cond(PTHREAD_COND_INITIALIZER){}
+    : lock(PTHREAD_MUTEX_INITIALIZER), cond(PTHREAD_COND_INITIALIZER), exit_flag(false){}
     virtual ~Shared_Base()
     {
       pthread_mutex_destroy(&lock);
@@ -33,18 +35,11 @@ namespace gnd
     //Command line related function and parameters
     func_t action;
     func_params_t params;
-    
-    volatile bool exit_flag;
-    M_KM_Shared()
-    : exit_flag(false){}
   };
   
-  //Shared between threads: main, file writer
-  struct M_FW_Shared
+  //Shared between threads: main, packet retriever
+  struct M_PR_Shared : Shared_Base
   {
-    volatile bool exit_flag;
-    M_FW_Shared()
-    : exit_flag(false){}
   };
   
 }
