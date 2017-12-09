@@ -17,7 +17,6 @@ void showStartupInfo()
 {
   cout << "Groundstation shell ready." << endl;
   cout << "Supported commands: reboot, shutdown, mode, test" << endl;
-  cout << "Type 'help' for details." << endl;
 }
 
 
@@ -81,6 +80,8 @@ int main(int argc, char** argv)
     {
       cout << ">>> " << flush;
       pthread_mutex_lock(&m_km_mem.lock);
+      
+      //Wait for signal from keyboard monitor.
       pthread_cond_wait(&m_km_mem.cond, &m_km_mem.lock);
       //If 'exit' is typed.
       if(m_km_mem.exit_flag)
@@ -88,6 +89,8 @@ int main(int argc, char** argv)
 	  pthread_mutex_unlock(&m_km_mem.lock);
 	  break;
 	}
+
+      //Take actions
       m_km_mem.action(m_km_mem.params);
       pthread_mutex_unlock(&m_km_mem.lock);
     }

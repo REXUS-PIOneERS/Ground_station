@@ -20,15 +20,11 @@ namespace gnd
     static void test(const func_params_t&);
     static void mode(const func_params_t&);
 
-    //Not yet implemented
-    static void reset(const func_params_t&);
     static void invalid(const func_params_t&);
   
     static void showParams(const func_params_t&);
-
-    static void readConfigFile(const std::string& filename);
   
-    static std::map<std::string, func_t> command_map;
+    static std::map<std::string, func_t> command_map;  //A look up table of commands
 
     static rfcom::Transceiver* trPtr;
 
