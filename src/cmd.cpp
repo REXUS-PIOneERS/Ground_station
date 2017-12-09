@@ -18,8 +18,8 @@ namespace gnd
   
   void CMD::reboot(const func_params_t& params)
   {
-    rfcom::byte1_t cmd_data = 0x01;
-    if(trPtr->packSend(CMD_ID, &cmd_data) == 0)
+    rfcom::byte1_t cmd_data[2] = {0x01, 0x00};
+    if(trPtr->packSend(CMD_ID, cmd_data) == 0)
       SENT_FEEDBACK("reboot");
     else
       SENT_FEEDBACK("reboot");
@@ -36,8 +36,8 @@ namespace gnd
     else
       {
 	shutdown_called = false;    
-	rfcom::byte1_t cmd_data = 0x02;
-	if(trPtr->packSend(CMD_ID, &cmd_data) == 0)
+	rfcom::byte1_t cmd_data[2] = {0x02, 0x00};
+	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
 	  SENT_FEEDBACK("shutdown");
 	else
 	  UNSENT_FEEDBACK("shutdown");
@@ -49,8 +49,8 @@ namespace gnd
     //mode flight
     if(params[0] == "flight")
       {
-	rfcom::byte1_t cmd_data = 0x03;
-	if(trPtr->packSend(CMD_ID, &cmd_data) == 0)
+	rfcom::byte1_t cmd_data[2] = {0x03, 0x00};
+	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
 	  SENT_FEEDBACK("mode flight");
 	else
 	  UNSENT_FEEDBACK("mode flight");
