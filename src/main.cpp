@@ -86,27 +86,30 @@ int main(int argc, char** argv)
       if(m_km_mem.exit_flag)
 	{
 	  pthread_mutex_unlock(&m_km_mem.lock);
-	  //set packet retriever exit flag
-	  pthread_mutex_lock(&m_pr_mem.lock);
-	  m_pr_mem.exit_flag = true;
-	  pthread_mutex_unlock(&m_pr_mem.lock);
 	  break;
 	}
       m_km_mem.action(m_km_mem.params);
       pthread_mutex_unlock(&m_km_mem.lock);
     }
 
-  //Terminate worker threads
-  pthread_join(packet_retriever_t, NULL);
+  //Terminate keyboard monitor
   pthread_join(kb_monitor_t, NULL);
   
+  //Stop listener thread of transceiver
+  tr.stopReceiving();
+  
+  //Terminate packet retriever thread
+  pthread_mutex_lock(&m_pr_mem.lock);
+  m_pr_mem.exit_flag = true;
+  pthread_mutex_unlock(&m_pr_mem.lock);
+  pthread_join(packet_retriever_t, NULL);
+  
+  //Involves cleaning up PDU stream, so do it after terminating packet retriever thread.
+  tr.termPort();
+
   //close log files
   Workers::data_fs.close();
   Workers::bad_packet_fs.close();
-
-  //Terminate transceiver
-  tr.stopReceiving();
-  tr.termPort();
-
+  
   return 0;
 }

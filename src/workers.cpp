@@ -22,8 +22,17 @@ namespace gnd
     while(std::getline(std::cin, input))
       {
 	iss.str(input);
+	
 	//Acquired command from input
+	command.clear();
 	iss >> command;
+	//blank line
+	if(command == "")
+	  {
+	    iss.clear();
+	    std::cout << ">>> ";
+	    continue;
+	  }
 	
 	pthread_mutex_lock(&mem_ptr->lock);
 	//Acquire params from input
@@ -46,7 +55,7 @@ namespace gnd
 	if((m_it = CMD::command_map.find(command)) == CMD::command_map.end())
 	  m_it = CMD::command_map.find("invalid");
 	
-	//valid commands
+	//command selected
 	mem_ptr->action = m_it->second;
 	pthread_cond_signal(&mem_ptr->cond);
 	pthread_mutex_unlock(&mem_ptr->lock);
@@ -54,6 +63,9 @@ namespace gnd
     pthread_exit(NULL);
   }
 
+#define GET_INDEX_H(X) (X & 0xff00)
+#define GET_INDEX_L(X) (X & 0x00ff)
+  
 #define GET_DSM(X)    (X & 0xc0)
 #define GET_PI_NUM(X) (X & 0x30)
 #define GET_TYPE(X)   (X & 0x0f)
@@ -87,16 +99,24 @@ namespace gnd
     rfcom::byte2_t index;
     rfcom::byte1_t data[16];
     int err_code = 0;
+    rfcom::byte1_t line_wrap_cond = 0x00;
+    //Construct an FSM to deal with line wraps
 
-    while(mem_ptr->exit_flag)
+       
+    pthread_mutex_lock(&mem_ptr->lock);
+    //Ignore leftover PDUs
+    while((err_code = trPtr->tryPopUnpack(id, index, data)) != -1 || !mem_ptr->exit_flag)
       {
-	err_code = trPtr->tryPopUnpack(id, index, data);
+	pthread_mutex_unlock(&mem_ptr->lock);
+	//err_code = trPtr->tryPopUnpack(id, index, data);
 	//PDU stream empty
 	if(err_code == -1)
 	  {
 	    usleep(1000);
+	    pthread_mutex_lock(&mem_ptr->lock);
 	    continue;
 	  }
+	
 	//Bad packet
 	else if(err_code < 0)
 	  {
@@ -111,27 +131,17 @@ namespace gnd
 	    id_dsm = GET_DSM(id);
 	    id_pi_num = GET_PI_NUM(id);
 	    id_type = GET_TYPE(id);
-
-	    //Assume messages are received in chunks in PDU stream.
-	    //If such chunks break up, it means a complete message is received. Time to wrap a line
-	    if(id_dsm != DSM_MESG && _prev_is_mesg)
-	      {
-		_prev_is_mesg = false;
-		std::cout << std::endl;
-		std::cout << ">>> " << std::endl;
-	      }
 	    
 	    switch(id_dsm)
 	      {
 	      case DSM_MESG:
-		_prev_is_mesg = true;
 		_array_out(data, 16, std::cout);
 		break;
 		
 	      case DSM_DATA:
 		_new_data_entry(id_pi_num, id_type, index, data);
 		break;
-		
+
 	      case DSM_STAT:
 		data_fs << "Status packet?" << std::endl;
 		break;
@@ -140,9 +150,20 @@ namespace gnd
 		data_fs << "Unknown packet?" << std::endl;
 		break;
 	      }
-	  }
 
+	    //Line wrap control
+	    //Assume messages are received in chunks in PDU stream.	    
+	    //If such chunks break up, it means a complete message is received. Time to wrap a line
+	    line_wrap_cond = (id_dsm == DSM_MESG) ? 0x02 : 0x00;
+	    line_wrap_cond |= (GET_INDEX_L(index)) ? 0x01 : 0x00;
+	    _line_wrap_detector.transit(line_wrap_cond);
+	    if(_line_wrap_detector.getCurrOutput())
+	      std::cout << "\n>>> " << std::flush;
+	  }
+	//Lock it up for the next round
+	pthread_mutex_lock(&mem_ptr->lock);
       }
+    pthread_mutex_unlock(&mem_ptr->lock);
     pthread_exit(NULL);
   }
 
@@ -216,9 +237,48 @@ namespace gnd
     std::copy(pos, pos + len, os_it);
   }
 
+  void Workers::constructWrapDetector()
+  {
+    //Output boolean type, indicate whether a line wrap is needed
+    //Transition type byte1_t
+    //0x00 --- is not a message packet, lower index zero.
+    //0x01 --- is not a message packet, lower index non-zero.
+    //0x02 --- is a message packet, lower index zero.
+    //0x03 --- is a message packet, lower index non-zero.
+    _line_wrap_detector.setState('a', false);
+    _line_wrap_detector.setState('b', true);
+    _line_wrap_detector.setState('c', true);
+    _line_wrap_detector.setState('d', false);
+    _line_wrap_detector.setState('0', false);
 
+    _line_wrap_detector.setTrans('a', 0x00, 'c');
+    _line_wrap_detector.setTrans('a', 0x01, 'c');
+    _line_wrap_detector.setTrans('a', 0x02, 'b');
+    _line_wrap_detector.setTrans('a', 0x03, 'a');
+    
+    _line_wrap_detector.setTrans('b', 0x00, 'd');
+    _line_wrap_detector.setTrans('b', 0x01, 'd');
+    _line_wrap_detector.setTrans('b', 0x02, 'b');
+    _line_wrap_detector.setTrans('b', 0x03, 'a');
+    
+    _line_wrap_detector.setTrans('c', 0x00, 'd');
+    _line_wrap_detector.setTrans('c', 0x01, 'd');
+    _line_wrap_detector.setTrans('c', 0x02, 'b');
+    _line_wrap_detector.setTrans('c', 0x03, 'a');
+    
+    _line_wrap_detector.setTrans('d', 0x00, 'd');
+    _line_wrap_detector.setTrans('d', 0x01, 'd');
+    _line_wrap_detector.setTrans('d', 0x02, 'b');
+    _line_wrap_detector.setTrans('d', 0x03, 'a');
+    
+    _line_wrap_detector.setTrans('0', 0x00, 'd');
+    _line_wrap_detector.setTrans('0', 0x01, 'd');
+    _line_wrap_detector.setTrans('0', 0x02, 'b');
+    _line_wrap_detector.setTrans('0', 0x03, 'a');
+  }
+  
   rfcom::Transceiver* Workers::trPtr = NULL;
   std::ofstream Workers::bad_packet_fs;
   std::ofstream Workers::data_fs;
-  bool Workers::_prev_is_mesg = false;
+  fsm::FSM<char, bool, rfcom::byte1_t> Workers::_line_wrap_detector;
 }

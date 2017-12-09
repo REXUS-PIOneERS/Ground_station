@@ -67,14 +67,14 @@ namespace gnd
     //test all
     if(params[0] == "all")
       {
-	rfcom::byte1_t cmd_data = 0x04;
-	if(trPtr->packSend(CMD_ID, &cmd_data) == 0)
+	rfcom::byte1_t cmd_data[2] = {0x04, 0x00};
+	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
 	  SENT_FEEDBACK("test all");
 	else
 	  UNSENT_FEEDBACK("test all");
       }
     //test imu
-    if(params[0] == "imu")
+    else if(params[0] == "imu")
       {
 	rfcom::byte1_t cmd_data[2] = {0x04, 0x01};
 	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
@@ -83,7 +83,7 @@ namespace gnd
 	  UNSENT_FEEDBACK("test imu");
       }
     //test camera
-    if(params[0] == "camera")
+    else if(params[0] == "camera")
       {
 	rfcom::byte1_t cmd_data[2] = {0x04, 0x02};
 	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
@@ -92,7 +92,7 @@ namespace gnd
 	  UNSENT_FEEDBACK("test camera");
       }
     //test imp
-    if(params[0] == "imp")
+    else if(params[0] == "imp")
       {
 	rfcom::byte1_t cmd_data[2] = {0x04, 0x03};
 	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
