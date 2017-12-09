@@ -67,8 +67,8 @@ namespace gnd
     //test all
     if(params[0] == "all")
       {
-	rfcom::byte1_t cmd_data = 0x04;
-	if(trPtr->packSend(CMD_ID, &cmd_data) == 0)
+	rfcom::byte1_t cmd_data[2] = {0x04, 0x00};
+	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
 	  SENT_FEEDBACK("test all");
 	else
 	  UNSENT_FEEDBACK("test all");
