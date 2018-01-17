@@ -21,7 +21,9 @@ namespace gnd
     static void mode(const func_params_t&);
 
     static void invalid(const func_params_t&);
-  
+
+
+    
     static void showParams(const func_params_t&);
   
     static std::map<std::string, func_t> command_map;  //A look up table of commands

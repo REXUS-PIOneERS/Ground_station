@@ -135,7 +135,7 @@ namespace gnd
 	    switch(id_dsm)
 	      {
 	      case DSM_MESG:
-		_array_out(data, 16, std::cout);
+		_message_out(data, 16, std::cout);
 		break;
 		
 	      case DSM_DATA:
@@ -235,6 +235,14 @@ namespace gnd
     std::copy(pos, pos + len, os_it);
   }
 
+  void Workers::_message_out(const rfcom::byte1_t* pos, size_t len, std::ostream& os)
+  {
+    auto os_it = std::ostream_iterator<char>(os, "");
+    std::copy(pos, pos + len, os_it);
+    os << std::flush;
+  }
+
+  
   void Workers::constructWrapController()
   {
     /*Output boolean type, indicate whether a line wrap is needed

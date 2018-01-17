@@ -54,6 +54,12 @@ namespace gnd
        */
       static inline void _array_out(const rfcom::byte1_t* pos, size_t len, std::ostream& os);
 
+
+      /**
+	 Newly added
+      */
+      static inline void _message_out(const rfcom::byte1_t* pos, size_t len, std::ostream& os);
+
       /**
 	 construct a FSM which is used to control line wrap when receiving mesages.
        */
