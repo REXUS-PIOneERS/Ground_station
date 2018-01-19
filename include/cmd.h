@@ -19,9 +19,10 @@ namespace gnd
     static void shutdown(const func_params_t&);
     static void test(const func_params_t&);
     static void mode(const func_params_t&);
+    static void clean(const func_params_t&);
+    static void rebuild(const func_params_t&);
 
     static void invalid(const func_params_t&);
-
 
     
     static void showParams(const func_params_t&);

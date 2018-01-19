@@ -15,7 +15,7 @@
 
 namespace gnd
 {
-  
+ 
   void CMD::reboot(const func_params_t& params)
   {
     rfcom::byte1_t cmd_data[2] = {0x01, 0x00};
@@ -48,13 +48,21 @@ namespace gnd
   {
     //mode flight
     if(params[0] == "flight")
-      {
-	rfcom::byte1_t cmd_data[2] = {0x03, 0x00};
-	if(trPtr->packSend(CMD_ID, cmd_data) == 0)
-	  SENT_FEEDBACK("mode flight");
-	else
-	  UNSENT_FEEDBACK("mode flight");
-      }
+    {
+      rfcom::byte1_t cmd_data[2] = {0x03, 0x01};
+      if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+        SENT_FEEDBACK("mode flight");
+      else
+        UNSENT_FEEDBACK("mode flight");
+    }
+    else if(params[0] == "test")
+    {
+	    rfcom::byte1_t cmd_data[2] = {0x03, 0x00};
+      if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+        SENT_FEEDBACK("mode flight");
+      else
+        UNSENT_FEEDBACK("mode flight");
+    }    
 
 
     //Invalid parameter
@@ -107,6 +115,51 @@ namespace gnd
       INVALID_PARAM_FEEDBACK("test", params[0]);
   }
 
+  void CMD::clean(const func_params_t&params)
+  {
+    if(params[0] == "all")
+    {
+      rfcom::byte1_t cmd_data[2] = {0x05, 0x00};
+      if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+        SENT_FEEDBACK("clean all");
+      else
+        UNSENT_FEEDBACK("clean all");      
+    }
+    else if(params[0] == "data")
+    {
+      rfcom::byte1_t cmd_data[2] = {0x05, 0x01};
+      if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+        SENT_FEEDBACK("clean data");
+      else
+        UNSENT_FEEDBACK("clean data");      
+    }
+    else if(params[0] == "video")
+    {
+      rfcom::byte1_t cmd_data[2] = {0x05, 0x02};
+      if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+        SENT_FEEDBACK("clean video");
+      else
+        UNSENT_FEEDBACK("clean video");      
+    }
+    else if(params[0] == "logs")
+    {
+      rfcom::byte1_t cmd_data[2] = {0x05, 0x03};
+      if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+        SENT_FEEDBACK("clean logs");
+      else
+        UNSENT_FEEDBACK("clean logs");      
+    }
+  }
+
+  void CMD::rebuild(const func_params_t& params)
+  {
+    rfcom::byte1_t cmd_data[2] = {0x06, 0x00};
+    if(trPtr->packSend(CMD_ID, cmd_data) == 0)
+      SENT_FEEDBACK("rebuild");
+    else
+      UNSENT_FEEDBACK("rebuild");      
+  }
+
       
   void CMD::invalid(const func_params_t& params)
   {
@@ -126,7 +179,9 @@ namespace gnd
       {std::make_pair("shutdown", shutdown)},
       {std::make_pair("mode", mode)},
       {std::make_pair("test", test)},
-      {std::make_pair("invalid", invalid)}
+      {std::make_pair("invalid", invalid)},
+      {std::make_pair("clean",clean)},
+      {std::makepair("rebuild",rebuild)}
     };
 
   rfcom::Transceiver* CMD::trPtr = NULL;
