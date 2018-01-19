@@ -181,7 +181,7 @@ namespace gnd
       {std::make_pair("test", test)},
       {std::make_pair("invalid", invalid)},
       {std::make_pair("clean",clean)},
-      {std::makepair("rebuild",rebuild)}
+      {std::make_pair("rebuild",rebuild)}
     };
 
   rfcom::Transceiver* CMD::trPtr = NULL;
