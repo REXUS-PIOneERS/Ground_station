@@ -59,10 +59,12 @@ int main(int argc, char** argv)
   
   //Initialize workers
   Workers::trPtr = &tr;
-  Workers::bad_packet_fs.open(g_config->bad_packet_log);
+  Workers::bad_packet_fs.open(g_config->bad_packet_log, std::ios_base::app);
   CHECK_FATAL_ERROR(!Workers::bad_packet_fs.is_open(), "Cannot open bad packet log file: " + g_config->bad_packet_log + "!");
-  Workers::data_fs.open(g_config->data_log);
+  Workers::bad_packet_fs << "\nNew run started\n\n";
+  Workers::data_fs.open(g_config->data_log, std::ios_base::app);
   CHECK_FATAL_ERROR(!Workers::data_fs.is_open(), "Cannot open data log file: " + g_config->data_log + "!");
+  Workers::data_fs << "\nNew run started\n\n";
   
   pthread_t kb_monitor_t;
   error_code = pthread_create(&kb_monitor_t, NULL, Workers::kb_monitor, &m_km_mem);

@@ -205,13 +205,15 @@ namespace gnd
 	// acc/gyr
       case DATA_TYPE_AG:
 	data_fs << "acc/gyr:\t[" << index << "]" << "\t";
-	_array_out(data, 12, data_fs);
+	//_array_out(data, 12, data_fs);
+  _acc_gyr_out_1(data, data_fs);
 	data_fs << std::endl;
 	break;
 	// mag/time
       case DATA_TYPE_MT:
 	data_fs << "mag/time:\t[" << index << "]" << "\t";
-	_array_out(data, 10, data_fs);
+	//_array_out(data, 10, data_fs);
+  _mag_time_out_1(data, data_fs);
 	data_fs << std::endl;
 	break;
 	//mag/time/imp
@@ -228,6 +230,46 @@ namespace gnd
       }
   }
   
+  void Workers::_acc_gyr_out_1(const rfcom::byte1_t* pos, std::ostream& os) {
+    int16_t combined[6];
+    double acc_values[3];
+    double gyr_values[3];
+    for (int i = 0; i < 12; i += 2)
+        combined[i/2] = (int16_t)(pos[i] & (pos[i+1] << 8))
+    
+    for (int i = 0; i < 3; i++)
+      acc_values[i] = ((double)combined[i])/(8192)
+
+    for (int i = 0; i < 3; i++)
+      gyr_values[i] = ((double)combined[i+3] * 125)/(1024)
+
+    os << "acc_x-" << acc_values[0] << " " <<
+          "acc_y-" << acc_values[1] << " " <<
+          "acc_z-" << acc_values[2] << " " <<
+          "gyr_x-" << gyr_values[0] << " " <<
+          "gyr_y-" << gyr_values[1] << " " <<
+          "gyr_z-" << gyr_values[2];
+    
+    return;
+  }
+
+  void Workers::_mag_time_out_1(const rfcom::byte1_t* pos, std::ostream& os) {
+    double mag_values[3];
+    int32_t time_stamp;
+    for (int i = 0; i < 6; i += 2) {
+      mag_values[i/2] = (int16_t)(pos[i] & (pos[i+1] << 8));
+      mag_values /= 8192;    
+    }
+
+    time_stamp = (int32_t)(pos[7] & (pos[8] << 8) & (pos[9] << 16) & (pos[10] << 32));
+
+    os << "mag_x-" << mag_values[0] << " " <<
+          "mag_y-" << mag_values[1] << " " <<
+          "mag_z-" << mag_values[2] << " " <<
+          "time-"  << time_stamp;
+    return;
+  }
+
   void Workers::_array_out(const rfcom::byte1_t* pos, size_t len, std::ostream& os)
   {
     os << std::hex;
