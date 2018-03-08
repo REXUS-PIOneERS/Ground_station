@@ -54,6 +54,9 @@ namespace gnd
        */
       static inline void _array_out(const rfcom::byte1_t* pos, size_t len, std::ostream& os);
 
+      static inline void _acc_gyr_out_1(const rfcom::byte1_t* pos, std::ostream& os);
+      static inline void _mag_time_out_1(const rfcom::byte1_t* pos, std::ostream& os);
+
 
       /**
 	 Newly added
