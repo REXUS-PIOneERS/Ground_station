@@ -202,31 +202,35 @@ namespace gnd
     //determine data type
     switch (id_type)
       {
-	// acc/gyr
+	    // acc/gyr
       case DATA_TYPE_AG:
-	data_fs << "acc/gyr:\t[" << index << "]" << "\t";
-	//_array_out(data, 12, data_fs);
-  _acc_gyr_out_1(data, data_fs);
-	data_fs << std::endl;
-	break;
-	// mag/time
+        data_fs << "acc/gyr:\t[" << index << "]" << "\t";
+        _array_out(data, 16, data_fs);
+        if (id_pi_num == PI_NUM_1)
+          _acc_gyr_out_1(data, data_fs);
+        else
+          _acc_gyr_out_2(data, data_fs);
+	      data_fs << std::endl;
+	      break;
+	    // mag/time
       case DATA_TYPE_MT:
-	data_fs << "mag/time:\t[" << index << "]" << "\t";
-	//_array_out(data, 10, data_fs);
-  _mag_time_out_1(data, data_fs);
-	data_fs << std::endl;
-	break;
-	//mag/time/imp
+	      data_fs << "mag/time:\t[" << index << "]" << "\t";
+	      _array_out(data, 16, data_fs);
+        _mag_time_out_1(data, data_fs);
+	      data_fs << std::endl;
+	      break;
+	    //mag/time/imp
       case DATA_TYPE_MTI:
-	data_fs << "mag/imp/time:\t[" << index << "]" << "\t";
-	_array_out(data, 12, data_fs);
-	data_fs << std::endl;
-	break;
+	      data_fs << "mag/imp/time:\t[" << index << "]" << "\t";
+	      _array_out(data, 16, data_fs);
+	      _mag_time_imp_out_2(data, data_fs);
+        data_fs << std::endl;
+	      break;
       default:
-	data_fs << "unknown:\t[" << index << "]" << "\t";
-	_array_out(data, 16, data_fs);
-	data_fs << std::endl;
-	break;	
+	      data_fs << "unknown:\t[" << index << "]" << "\t";
+	      _array_out(data, 16, data_fs);
+	      data_fs << std::endl;
+	      break;	
       }
   }
   
@@ -234,40 +238,91 @@ namespace gnd
     int16_t combined[6];
     double acc_values[3];
     double gyr_values[3];
-    for (int i = 0; i < 12; i += 2)
-        combined[i/2] = (int16_t)(pos[i] & (pos[i+1] << 8))
+    for (int i = 0; i < 12; i += 2) {
+        combined[i/2] = (int16_t)(pos[i] | (pos[i+1] << 8));
+    }
     
-    for (int i = 0; i < 3; i++)
-      acc_values[i] = ((double)combined[i])/(8192)
+    for (int i = 0; i < 3; i++) {
+      acc_values[i] = ((double)combined[i])/(16384);
+    }
 
     for (int i = 0; i < 3; i++)
-      gyr_values[i] = ((double)combined[i+3] * 125)/(1024)
+      gyr_values[i] = ((double)combined[i+3] * 125)/(2048);
 
-    os << "acc_x-" << acc_values[0] << " " <<
-          "acc_y-" << acc_values[1] << " " <<
-          "acc_z-" << acc_values[2] << " " <<
-          "gyr_x-" << gyr_values[0] << " " <<
-          "gyr_y-" << gyr_values[1] << " " <<
-          "gyr_z-" << gyr_values[2];
+    os << "\n\t\tACC " << acc_values[0] << " " <<
+          acc_values[1] << " " <<
+          acc_values[2] << "\n\t\t" <<
+          "GYR " << gyr_values[0] << " " <<
+          gyr_values[1] << " " <<
+          gyr_values[2];
     
     return;
   }
+
+  void Workers::_acc_gyr_out_2(const rfcom::byte1_t* pos, std::ostream& os) {
+    int16_t combined[6];
+    double acc_values[3];
+    double gyr_values[3];
+    for (int i = 0; i < 12; i += 2) {
+        combined[i/2] = (int16_t)(pos[i+1] | (pos[i] << 8));
+    }
+    
+    for (int i = 0; i < 3; i++) {
+      acc_values[i] = ((double)combined[i])/(16384);
+    }
+
+    for (int i = 0; i < 3; i++)
+      gyr_values[i] = ((double)combined[i+3] * 125)/(2048);
+
+    os << "\n\t\tACC " << acc_values[0] << " " <<
+          acc_values[1] << " " <<
+          acc_values[2] << "\n\t\t" <<
+          "GYR " << gyr_values[0] << " " <<
+          gyr_values[1] << " " <<
+          gyr_values[2];
+    
+    return;
+  }
+
 
   void Workers::_mag_time_out_1(const rfcom::byte1_t* pos, std::ostream& os) {
     double mag_values[3];
     int32_t time_stamp;
     for (int i = 0; i < 6; i += 2) {
-      mag_values[i/2] = (int16_t)(pos[i] & (pos[i+1] << 8));
-      mag_values /= 8192;    
+      mag_values[i/2] = (int16_t)(pos[i] | (pos[i+1] << 8));
+      mag_values[i/2] /= 8192;    
     }
 
-    time_stamp = (int32_t)(pos[7] & (pos[8] << 8) & (pos[9] << 16) & (pos[10] << 32));
+    time_stamp = (int32_t)(pos[10] | (pos[9] << 8) | (pos[8] << 16) | (pos[7] << 32));
 
-    os << "mag_x-" << mag_values[0] << " " <<
-          "mag_y-" << mag_values[1] << " " <<
-          "mag_z-" << mag_values[2] << " " <<
-          "time-"  << time_stamp;
+    os << "\n\t\tMAG " << mag_values[0] << " " <<
+          mag_values[1] << " " <<
+          mag_values[2] << "\n\t\t" <<
+          "TM "  << time_stamp;
     return;
+  }
+
+  void Workers::_mag_time_imp_out_2(const rfcom::byte1_t* pos, std::ostream& os) {
+    int16_t temp[3];
+    double mag_values[3];
+    int16_t time_stamp[3];
+    int8_t freq;
+    for (int i = 0; i < 6; i += 2) {
+      temp[i/2] = (int16_t)(pos[i+1] | (pos[i] << 8));
+      mag_values[i/2] = (double)temp[i/2]/8192;    
+    }
+
+    for (int i = 0; i < 3; i += 1) {
+      time_stamp[i] = (int16_t)((pos[7+2*i] << 8) | pos[8+2*i]);
+    }
+    freq = (int8_t)(pos[13]);
+
+    os << "\n\t\tMAG " << mag_values[0] << " " <<
+          mag_values[1] << " " <<
+          mag_values[2] << "\n\t\t" <<
+          "UHRres " << (int)freq << "\n\t\t"
+          "TM "  << time_stamp[0] << " " << time_stamp[1] << " " << time_stamp[2];
+    return;   
   }
 
   void Workers::_array_out(const rfcom::byte1_t* pos, size_t len, std::ostream& os)

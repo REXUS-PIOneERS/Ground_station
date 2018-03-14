@@ -15,8 +15,9 @@ using namespace gnd;
 
 void showStartupInfo()
 {
+  cout << endl << "Welcome to the Matrix" << endl << endl;
   cout << "Groundstation shell ready." << endl;
-  cout << "Supported commands: reboot, shutdown, mode, test" << endl;
+  cout << "Supported commands: reboot, shutdown, mode, test, clean and rebuild" << endl;
 }
 
 
